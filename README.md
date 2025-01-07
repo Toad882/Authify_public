@@ -92,9 +92,9 @@ See the notes below for limitations and known issues.
     heroku config:set VAR_NAME=value
 ## API Examples
 ### Token Endpoint
-URL: /token 
-Method: POST
-Description: Issues an OAuth2 token.
+URL: /token   
+Method: POST  
+Description: Issues an OAuth2 token
 #### Request Parameters
 | Parameter       | Type   | Required | Description                                                                 |
 |-----------------|--------|----------|-----------------------------------------------------------------------------|
@@ -119,9 +119,9 @@ Description: Issues an OAuth2 token.
       "expires_in": 3600
     }
 ### Authorization Endpoint
-URL: /authorize
-Method: GET
-Description: Handles user authorization requests, including OAuth2 flows.
+URL: /authorize  
+Method: GET  
+Description: Handles user authorization requests, including OAuth2 flows
 #### Request Parameters
 | Parameter      | Type   | Required | Description                                                                 |
 |----------------|--------|----------|-----------------------------------------------------------------------------|
