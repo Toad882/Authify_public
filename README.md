@@ -65,7 +65,7 @@ See the notes below for limitations and known issues.
 1. Clone the repository:
    ```bash
    git clone https://github.com/Toad882/Authify_public.git
-   cd authify
+   cd Authify_public
 2. Create a virtual environment:
    ```bash
    python -m venv venv
@@ -79,7 +79,7 @@ See the notes below for limitations and known issues.
 1. Start the backend server:
    ```bash
    git clone https://github.com/Toad882/Authify_public.git
-   cd authify
+   cd Authify_public
 ### Deployment on Heroku
 1. Create a Heroku app:
     ```bash
