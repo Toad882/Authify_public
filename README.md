@@ -64,7 +64,7 @@ Authify is a robust and flexible authentication provider (IdP) designed to manag
 See the notes below for limitations and known issues.
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/authify.git
+   git clone https://github.com/Toad882/Authify_public.git
    cd authify
 2. Create a virtual environment:
    ```bash
@@ -78,7 +78,7 @@ See the notes below for limitations and known issues.
 ### Running the Application
 1. Start the backend server:
    ```bash
-   git clone https://github.com/yourusername/authify.git
+   git clone https://github.com/Toad882/Authify_public.git
    cd authify
 ### Deployment on Heroku
 1. Create a Heroku app:
