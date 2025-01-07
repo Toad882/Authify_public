@@ -171,7 +171,7 @@ If local development is preferred, the following limitations should be considere
 - No VPN should be used while running the application if an online database is used.
 - The LOCAL environment variable should be set to True in the .env file.
 ## Roadmap
-### Future Enhancements:
+### Future Enhancements
 Decentralization: Multi-backend system for higher availability.
 SAML 2.0 Support: Increase compatibility with enterprise systems.
 AI-Driven Security: Suspicious login detection and personalized user experiences.
