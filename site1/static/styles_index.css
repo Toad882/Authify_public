@@ -1,0 +1,130 @@
+/* Stile globale del corpo */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f3f4f7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Contenitore per il form di email */
+#emailForm {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Effetto hover sul form */
+#emailForm:hover {
+    transform: scale(1.05);
+}
+
+/* Stile per il titolo del form */
+#emailForm h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+/* Linea decorativa sotto il titolo */
+#emailForm h2:after {
+    content: '';
+    width: 60px;
+    height: 4px;
+    background-color: #28a745;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -10px;
+    border-radius: 2px;
+}
+
+/* Stile per le etichette */
+#emailForm label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+    text-align: left;
+}
+
+/* Stile per i campi di input */
+#emailForm input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+/* Stile quando l'input è attivo */
+#emailForm input[type="email"]:focus {
+    border-color: #28a745;
+    outline: none;
+    background-color: #fff;
+}
+
+/* Stile per il pulsante di invio */
+#emailForm button {
+    width: 100%;
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+/* Cambiamento di colore al passaggio del mouse sul pulsante */
+#emailForm button:hover {
+    background-color: #218838;
+}
+
+/* Animazione per l'hover del pulsante */
+#emailForm button:active {
+    transform: translateY(2px);
+}
+
+/* Stile per il link "Registrati ora" e "Forgot your password" */
+#emailForm p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #555;
+}
+
+#emailForm a {
+    color: #28a745;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+#emailForm a:hover {
+    color: #218838;
+}
+
+/* Stile per il layout mobile */
+@media (max-width: 768px) {
+    #emailForm {
+        padding: 30px;
+    }
+
+    #emailForm h2 {
+        font-size: 22px;
+    }
+}

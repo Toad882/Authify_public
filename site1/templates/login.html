@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="../static/styles_login.css"> <!-- Updated path -->
+<script>
+    function showPasswordFields() {
+        // Mostra i campi per la password
+        document.getElementById('password-fields').style.display = 'block';
+        document.getElementById('register-password').required = true;
+    
+        // Imposta le icone predefinite (occhichiusi.jpg)
+        document.getElementById('toggle-password').src = "../static/occhichiusi.jpg";
+        document.getElementById('toggle-confirm-password').src = "../static/occhichiusi.jpg";
+    }
+
+    function togglePasswordVisibility(passwordId, iconId) {
+    const passwordField = document.getElementById(passwordId);
+    const icon = document.getElementById(iconId);
+
+    if (passwordField.type === "password") {
+        passwordField.type = "text"; // Mostra la password
+        icon.src = "../static/occhiaperti.jpg"; // Cambia l'icona per la password visibile
+    } else {
+        passwordField.type = "password"; // Nasconde la password
+        icon.src = "../static/occhichiusi.jpg"; // Cambia l'icona per la password nascosta
+    }
+}
+</script>
+</head>
+<body>
+    <form id="login-form" action="/login" method="POST">
+        <h2>Login con Password</h2>
+
+        <label for="login-username">Username:</label>
+        <input type="text" id="login-username" name="username" required>
+
+        <label for="login-password">Password:</label>
+        <div class="password-container">
+            <input type="password" id="register-password" name="password">
+            <img src="../static/occhichiusi.jpg" id="toggle-password" class="password-icon" onclick="togglePasswordVisibility('register-password', 'toggle-password')" />
+        </div>
+
+        <input type="hidden" id="next_url" name="next_url" value="{{ request.args.get('next') }}">
+
+        <input type="hidden" name="csrf_token" value = "{{ csrf_token() }}" />
+
+    <button type="submit">Login</button>
+
+        <!-- Posizione dei messaggi flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Sezione per la registrazione -->
+        <p>Non hai un account? <a href="/register">Registrati ora</a></p>
+
+        <!-- Sezione per l'accesso con Passkey -->
+        <p>Accedi con Passkey <a href="#" id="loginPasskeyLink" onclick="authenticatePasskey()">Clicca qui</a></p>
+
+        <!-- Sezione per la password dimenticata -->
+        <p><a href="/forgotPasswd">Hai dimenticato la password?</a></p>
+
+        
+    </form>
+
+    
+
+
+<script>
+    async function authenticatePasskey() {
+    try {
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+        const response = await fetch('/start_passkey_authentication', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({})
+        });
+
+        const options = await response.json();
+        if (options.status !== 'success') {
+            alert(options.message);
+            return;
+        }
+
+        const publicKeyOptions = options.authenticationOptions;
+        publicKeyOptions.challenge = Uint8Array.from(atob(publicKeyOptions.challenge), c => c.charCodeAt(0));
+        publicKeyOptions.allowCredentials = publicKeyOptions.allowCredentials.map(cred => {
+            cred.id = Uint8Array.from(atob(cred.id), c => c.charCodeAt(0));
+            return cred;
+        });
+
+        try {
+            const credential = await navigator.credentials.get({ publicKey: publicKeyOptions });
+            const verificationResponse = await fetch('/verify_passkey_authentication', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    id: credential.id,
+                    rawId: base64FromArrayBuffer(credential.rawId),
+                    response: {
+                        clientDataJSON: base64FromArrayBuffer(credential.response.clientDataJSON),
+                        authenticatorData: base64FromArrayBuffer(credential.response.authenticatorData),
+                        signature: base64FromArrayBuffer(credential.response.signature),
+                        userHandle: credential.response.userHandle ? base64FromArrayBuffer(credential.response.userHandle) : null
+                    }
+                }),
+            });
+
+            const result = await verificationResponse.json();
+            if (result.status === 'success') {
+                alert('Login successful!');
+                const nextUrl = result.next_url || '/dashboard';
+                window.location.href = nextUrl;
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            alert('Error during passkey authentication.');
+        }
+    } catch (error) {
+        alert('Error during passkey authentication.');
+    }
+}
+
+function base64FromArrayBuffer(arrayBuffer) {
+    let binary = '';
+    const bytes = new Uint8Array(arrayBuffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+</script>

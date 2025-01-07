@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione</title>
+
+    <link rel="stylesheet" href="../static/styles_register.css">
+
+    <script>
+        function showPasswordFields() {
+            // Mostra i campi per la password
+            document.getElementById('password-fields').style.display = 'block';
+            document.getElementById('register-password').required = true;
+            document.getElementById('register-confirm-password').required = true;
+
+            // Imposta le icone predefinite (occhichiusi.jpg)
+            document.getElementById('toggle-password').src = "../static/occhichiusi.jpg";
+            document.getElementById('toggle-confirm-password').src = "../static/occhichiusi.jpg";
+        }
+
+        function togglePasswordVisibility(passwordId, iconId) {
+            const passwordField = document.getElementById(passwordId);
+            const icon = document.getElementById(iconId);
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text"; // Mostra la password
+                icon.src = "../static/occhiaperti.jpg"; // Cambia l'icona per la password visibile
+            } else {
+                passwordField.type = "password"; // Nasconde la password
+                icon.src = "../static/occhichiusi.jpg"; // Cambia l'icona per la password nascosta
+            }
+        }
+
+        function validateForm() {
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+
+            if (password !== confirmPassword) {
+                alert("Le password non corrispondono!");
+                return false; // Impedisce l'invio del form
+            }
+            return true; // Permette l'invio del form
+        }
+    </script>
+</head>
+<body>
+    <form id="register-form" action="/register" method="POST" onsubmit="return validateForm();">
+        <h2>Registrati</h2>
+
+        <label for="register-username">Username:</label>
+        <input type="text" id="register-username" name="username" required>
+
+        <label for="register-email">Email:</label>
+        <input type="email" id="register-email" name="email" required>
+        <input type="hidden" name="csrf_token" value = "{{ csrf_token() }}" />
+
+        <div id="password-fields" style="display: none;">
+            <label for="register-password">Password:</label>
+            <div class="password-container">
+                <input type="password" id="register-password" name="password">
+                <img src="../static/occhichiusi.jpg" id="toggle-password" class="password-icon" onclick="togglePasswordVisibility('register-password', 'toggle-password')" />
+            </div>
+
+            <label for="register-confirm-password">Conferma Password:</label>
+            <div class="password-container">
+                <input type="password" id="register-confirm-password" name="confirm_password">
+                <img src="../static/occhichiusi.jpg" id="toggle-confirm-password" class="password-icon" onclick="togglePasswordVisibility('register-confirm-password', 'toggle-confirm-password')" />
+            </div>
+        </div>
+
+        <button type="submit" onclick="showPasswordFields()">Registrati con Password</button>
+        <button type="button" id="startRegistration">Inizia Registrazione con Passkey</button>
+
+            <!-- Area per i messaggi di errore -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="flash-messages">
+            {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <p>Hai già un account? <a href="/login">Accedi ora</a></p>
+
+        
+
+    </form>
+
+    <script>
+        document.getElementById('startRegistration').addEventListener('click', async () => {
+    const username = document.getElementById('register-username').value;
+    const email = document.getElementById('register-email').value;
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    if (!username || !email) {
+        alert('Username and email are required!');
+        return;
+    }
+
+    try {
+        const response = await fetch('/start_passkey_registration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: new URLSearchParams({ username, email })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Unexpected response format');
+        }
+
+        const data = await response.json();
+
+        if (data.status !== 'success') {
+            throw new Error(data.message);
+        }
+
+        const publicKey = data.registrationOptions;
+
+        publicKey.challenge = base64url.decode(publicKey.challenge);
+        publicKey.user.id = base64url.decode(publicKey.user.id);
+
+        const credential = await navigator.credentials.create({ publicKey });
+
+        const attestationResponse = credential.response.attestationObject;
+        const clientDataJSON = credential.response.clientDataJSON;
+
+        const body = {
+            id: credential.id,
+            rawId: base64url.encode(credential.rawId),
+            response: {
+                attestationObject: base64url.encode(attestationResponse),
+                clientDataJSON: base64url.encode(clientDataJSON)
+            }
+        };
+
+        const verifyResponse = await fetch('/verify_passkey_registration', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!verifyResponse.ok) {
+            throw new Error(`HTTP error! Status: ${verifyResponse.status}`);
+        }
+
+        const verifyContentType = verifyResponse.headers.get('content-type');
+        if (!verifyContentType || !verifyContentType.includes('application/json')) {
+            throw new Error('Unexpected response format');
+        }
+
+        const verifyData = await verifyResponse.json();
+        if (verifyData.status === 'success') {
+            alert('Passkey registration successful!');
+            window.location.href = '/dashboard';
+        } else {
+            throw new Error(verifyData.message);
+        }
+    } catch (error) {
+        alert('Registration failed: ' + error.message);
+    }
+});
+
+// Define base64url utility functions
+const base64url = {
+    encode: function(arrayBuffer) {
+        let binaryString = '';
+        const bytes = new Uint8Array(arrayBuffer);
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binaryString += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binaryString)
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    },
+    decode: function(base64urlString) {
+        while (base64urlString.length % 4 !== 0) {
+            base64urlString += '=';
+        }
+        const base64 = base64urlString.replace(/-/g, '+').replace(/_/g, '/');
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+    }
+};
+    </script>
+
+    
+</body>
+</html>

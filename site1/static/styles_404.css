@@ -1,0 +1,76 @@
+/* Stili generali del corpo */
+body {
+    background-image: url('../static/hacker-1944688_1280.jpg'); /* Immagine di sfondo */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sovrapposizione dello sfondo per la sfocatura */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Sovrapposizione scura */
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Contenitore principale */
+.container {
+    background: rgba(255, 255, 255); /* Bianco con trasparenza */
+    padding: 40px 60px;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Titolo principale */
+.container h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #000000; 
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Paragrafo di descrizione */
+.container p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* Link per tornare alla Home */
+.container a {
+    display: inline-block;
+    padding: 12px 25px;
+    font-size: 16px;
+    color: white;
+    background-color: #007BFF;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Hover ed effetto click del link */
+.container a:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.container a:active {
+    transform: scale(0.98);
+}

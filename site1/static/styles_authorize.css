@@ -1,0 +1,104 @@
+/* Stili generali del corpo */
+body {
+    background-image: url('../static/hacker-1944688_1280.jpg'); /* Immagine di sfondo */
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sovrapposizione dello sfondo per la sfocatura */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Sovrapposizione scura */
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Contenitore principale */
+.authorize-container {
+    background: rgba(255, 255, 255); /* Bianco  */
+    padding: 40px 60px;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Titolo della pagina */
+.authorize-container h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #222;
+}
+
+/* Testo descrittivo */
+.authorize-container p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+/* Lista degli scope */
+.authorize-container ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    color: #444;
+}
+
+.authorize-container ul li {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+/* Pulsanti */
+button {
+    padding: 15px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 10px;
+    width: 45%; /* Distribuzione equa per "Authorize" e "Deny" */
+}
+
+button[type="submit"] {
+    background-color: #007BFF;
+    color: white;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+button[type="submit"]:active {
+    transform: scale(0.98);
+}
+
+button[type="submit"]:nth-child(2) {
+    background-color: #dc3545;
+    color: white;
+}
+
+button[type="submit"]:nth-child(2):hover {
+    background-color: #a71d2a;
+}

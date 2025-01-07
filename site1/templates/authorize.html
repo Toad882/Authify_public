@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorize Application</title>
+    <link rel="stylesheet" href="../static/styles_authorize.css">
+</head>
+<body>
+    <div class="authorize-container">
+        <h1>Authorize Application</h1>
+        <p>You are being asked to authorize the application:</p>
+        <strong>{{ client.client_id }}</strong>
+        <p>To access your account with the following scopes:</p>
+        <ul>
+            {% for s in scope.split() %}
+                <li>{{ s }}</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Authorization Form -->
+        <form id="authorize-form" method="GET" action="{{ url_for('auth.authorize') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="client_id" value="{{ client.client_id }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
+            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="response_type" value="code">
+            <button type="submit">Authorize</button>
+        </form>
+
+        <!-- Deny Button -->
+        <form id="deny-form" method="GET" action="{{ url_for('auth.authorize') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="client_id" value="{{ client.client_id }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
+            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="response_type" value="code">
+            <button type="submit">Deny</button>
+        </form>
+
+        <!-- JavaScript to handle authorization or denial -->
+        <script>
+            document.getElementById('authorize-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                var form = this;
+                var url = new URL(form.action);
+                Array.from(form.elements).forEach(function(element) {
+                    if (element.name) {
+                        url.searchParams.append(element.name, element.value);
+                    }
+                });
+                window.location.href = url.toString() + '&confirm=yes';
+            });
+
+            document.getElementById('deny-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                var form = this;
+                var url = new URL(form.action);
+                Array.from(form.elements).forEach(function(element) {
+                    if (element.name) {
+                        url.searchParams.append(element.name, element.value);
+                    }
+                });
+                window.location.href = url.toString() + '&confirm=no';
+            });
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+/* Stili generali del corpo */
+body {
+    background-image: url('../static/hacker-1944688_1280.jpg'); /* Immagine di sfondo */
+    background-size: cover;
+    background-position: center center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Sovrapposizione dello sfondo per la sfocatura */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Sovrapposizione scura */
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Form principale */
+#forgot-password-form {
+    background: rgba(255, 255, 255); /* Bianco con trasparenza */
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Titolo del form */
+#forgot-password-form h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #222;
+}
+
+/* Label dei campi */
+#forgot-password-form label {
+    font-size: 14px;
+    color: #555;
+    display: block;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+/* Input dei campi */
+#forgot-password-form input[type="email"] {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+/* Pulsante di invio */
+#forgot-password-form button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Hover ed effetto click del pulsante */
+#forgot-password-form button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+#forgot-password-form button:active {
+    transform: scale(0.98);
+}
+
+/* Testo descrittivo sotto il pulsante */
+#forgot-password-form p {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Link per tornare alla login */
+#forgot-password-form p a {
+    color: #007BFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#forgot-password-form p a:hover {
+    text-decoration: underline;
+}

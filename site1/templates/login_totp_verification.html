@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify TOTP</title>
+    <link rel="stylesheet" href="../static/styles_login_totp_verification.css">
+    <style>
+        .flash {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+    </style>
+</head>
+<body>
+    <div class="styles_totp_verification-container">
+        <h1>Verify TOTP</h1>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul>
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    
+        <p>Please enter the TOTP code from your authenticator app:</p>
+    
+        <form method="POST">
+            <label for="totp_code">TOTP Code:</label>
+            <input type="text" id="totp_code" name="totp_code"><br>
+            <input type="hidden" name="csrf_token" value = "{{ csrf_token() }}" />
+            <button type="submit">Verify</button>
+        </form>
+    
+        <a href="{{ url_for('auth.login') }}">Back to Login</a>
+    </div>
+    <!-- Aggiunta di contenuto extra per testare lo scrolling -->
+    <div style="height: 100px;"></div>
+</body>
+</html>
