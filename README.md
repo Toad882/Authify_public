@@ -41,7 +41,7 @@ Authify is a robust and flexible authentication provider (IdP) designed to manag
 ## Key Functionalities
 
 ### Authentication
-- **Credential Options**: Supports username/password, TOTP, and passkey authentication.
+- **Credential Options**: Supports username/password, TOTP and passkey authentication.
 - **Login Flow**:
   - Users choose their preferred authentication method.
   - TOTP or passkey satisfies multi-factor authentication requirements.
