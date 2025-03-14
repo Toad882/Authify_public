@@ -3,6 +3,8 @@
 Authify is a robust and flexible authentication provider (IdP) designed to manage user authentication for third-party websites, similar to "Login with Google." The system is built to be secure, scalable, and easy to integrate.
 
 ---
+## Collaborators
+[@AndreaMontrano] (https://github.com/AndreaMontrano)
 
 ## Features
 
