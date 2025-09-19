@@ -10,7 +10,7 @@
     <div class="authorize-container">
         <h1>Authorize Application</h1>
         <p>You are being asked to authorize the application:</p>
-        <strong>{{ client.client_id }}</strong>
+        <strong>{{ client.client_name }}</strong>
         <p>To access your account with the following scopes:</p>
         <ul>
             {% for s in scope.split() %}
@@ -18,7 +18,6 @@
             {% endfor %}
         </ul>
 
-        <!-- Authorization Form -->
         <form id="authorize-form" method="GET" action="{{ url_for('auth.authorize') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="client_id" value="{{ client.client_id }}">
@@ -29,7 +28,6 @@
             <button type="submit">Authorize</button>
         </form>
 
-        <!-- Deny Button -->
         <form id="deny-form" method="GET" action="{{ url_for('auth.authorize') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="client_id" value="{{ client.client_id }}">
@@ -40,7 +38,6 @@
             <button type="submit">Deny</button>
         </form>
 
-        <!-- JavaScript to handle authorization or denial -->
         <script>
             document.getElementById('authorize-form').addEventListener('submit', function(event) {
                 event.preventDefault();

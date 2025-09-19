@@ -32,10 +32,9 @@
     <div class="dashboard-container">
         <h1>Benvenuto al tuo Dashboard!</h1>
         <p>Ciao, {{ username }}! Sei attualmente connesso.</p>
-        <p>Email: {{ email }}</p> <!-- Display user's email -->
+        <p>Email: {{ email }}</p>
         <p>Ruolo: {{ role }}</p>
 
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -46,13 +45,11 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Logout Button -->
         <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
             <input type="hidden" name="csrf_token" value = "{{ csrf_token() }}" />
             <button type="submit">Esci</button>
         </form>
 
-        <!-- Create Client Form -->
         {% if role == 'admin' %}
             <h2>Crea un Nuovo Client</h2>
             <form action="{{ url_for('client.create_client') }}" method="POST">
@@ -64,7 +61,6 @@
         {% endif %}
 
 
-        <!-- List of Clients -->
         {% if clients %}
         <h2>Lista dei Clients</h2>
         <table border="1">
@@ -89,6 +85,6 @@
         {% endif %}
     </div>
 
-    <!-- Optional: You can add more content or links to other parts of the application -->
+
 </body>
 </html>

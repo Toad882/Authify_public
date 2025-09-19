@@ -1,8 +1,6 @@
-from authlib.integrations.flask_oauth2 import AuthorizationServer
-from auth import CustomAuthorizationCodeGrant, query_client, save_token, CustomAuthorizationServer
+from auth import CustomAuthorizationCodeGrant, query_client, save_token
 from auth import CustomAuthorizationServer
 
-# Initialize the AuthorizationServer
 oauth = CustomAuthorizationServer()
 
 def create_oauth(app):

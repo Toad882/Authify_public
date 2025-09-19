@@ -3,8 +3,6 @@
 Authify is a robust and flexible authentication provider (IdP) designed to manage user authentication for third-party websites, similar to "Login with Google." The system is built to be secure, scalable, and easy to integrate.
 
 ---
-## Collaborators
-[@AndreaMontrano] (https://github.com/AndreaMontrano)
 
 ## Features
 
@@ -41,7 +39,7 @@ Authify is a robust and flexible authentication provider (IdP) designed to manag
 ## Key Functionalities
 
 ### Authentication
-- **Credential Options**: Supports username/password, TOTP and passkey authentication.
+- **Credential Options**: Supports username/password, TOTP, and passkey authentication.
 - **Login Flow**:
   - Users choose their preferred authentication method.
   - TOTP or passkey satisfies multi-factor authentication requirements.
@@ -66,8 +64,8 @@ Authify is a robust and flexible authentication provider (IdP) designed to manag
 See the notes below for limitations and known issues.
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Toad882/Authify_public.git
-   cd Authify_public
+   git clone https://github.com/yourusername/authify.git
+   cd authify
 2. Create a virtual environment:
    ```bash
    python -m venv venv
@@ -80,8 +78,8 @@ See the notes below for limitations and known issues.
 ### Running the Application
 1. Start the backend server:
    ```bash
-   git clone https://github.com/Toad882/Authify_public.git
-   cd Authify_public
+   git clone https://github.com/yourusername/authify.git
+   cd authify
 ### Deployment on Heroku
 1. Create a Heroku app:
     ```bash
@@ -94,9 +92,9 @@ See the notes below for limitations and known issues.
     heroku config:set VAR_NAME=value
 ## API Examples
 ### Token Endpoint
-URL: /token   
-Method: POST  
-Description: Issues an OAuth2 token
+URL: /token 
+Method: POST
+Description: Issues an OAuth2 token.
 #### Request Parameters
 | Parameter       | Type   | Required | Description                                                                 |
 |-----------------|--------|----------|-----------------------------------------------------------------------------|
@@ -121,9 +119,9 @@ Description: Issues an OAuth2 token
       "expires_in": 3600
     }
 ### Authorization Endpoint
-URL: /authorize  
-Method: GET  
-Description: Handles user authorization requests, including OAuth2 flows
+URL: /authorize
+Method: GET
+Description: Handles user authorization requests, including OAuth2 flows.
 #### Request Parameters
 | Parameter      | Type   | Required | Description                                                                 |
 |----------------|--------|----------|-----------------------------------------------------------------------------|
@@ -173,7 +171,7 @@ If local development is preferred, the following limitations should be considere
 - No VPN should be used while running the application if an online database is used.
 - The LOCAL environment variable should be set to True in the .env file.
 ## Roadmap
-### Future Enhancements
+### Future Enhancements:
 Decentralization: Multi-backend system for higher availability.
 SAML 2.0 Support: Increase compatibility with enterprise systems.
 AI-Driven Security: Suspicious login detection and personalized user experiences.

@@ -2,7 +2,17 @@ from flask import Blueprint, request, session, redirect, url_for, flash
 from models import mongo, check_db_connection
 import uuid
 import os
+import re
 from werkzeug.security import generate_password_hash
+
+def validate_input_string(value, pattern=None, max_length=255):
+    if not isinstance(value, str):
+        return False
+    if len(value) > max_length:
+        return False
+    if pattern and not re.match(pattern, value):
+        return False
+    return True
 
 client_bp = Blueprint('client', __name__)
 
@@ -12,8 +22,14 @@ def create_client():
         flash('You need to log in first.', 'error')
         return redirect(url_for('auth.login'))
 
+    user_id = session['user_id']
+
+    if not validate_input_string(user_id):
+        flash('Invalid session. Please log in again.', 'error')
+        return redirect(url_for('auth.login'))
+
     check_db_connection()
-    user = mongo.db.users.find_one({'user_id': session['user_id']})
+    user = mongo.db.users.find_one({'user_id': user_id})
     if not user or user.get('role') != 'admin':
         flash('You do not have permission to create a client.', 'error')
         return redirect(url_for('user.dashboard'))

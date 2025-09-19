@@ -9,12 +9,10 @@
 
     <script>
         function showPasswordFields() {
-            // Mostra i campi per la password
             document.getElementById('password-fields').style.display = 'block';
             document.getElementById('register-password').required = true;
             document.getElementById('register-confirm-password').required = true;
 
-            // Imposta le icone predefinite (occhichiusi.jpg)
             document.getElementById('toggle-password').src = "../static/occhichiusi.jpg";
             document.getElementById('toggle-confirm-password').src = "../static/occhichiusi.jpg";
         }
@@ -24,11 +22,11 @@
             const icon = document.getElementById(iconId);
 
             if (passwordField.type === "password") {
-                passwordField.type = "text"; // Mostra la password
-                icon.src = "../static/occhiaperti.jpg"; // Cambia l'icona per la password visibile
+                passwordField.type = "text";
+                icon.src = "../static/occhiaperti.jpg";
             } else {
-                passwordField.type = "password"; // Nasconde la password
-                icon.src = "../static/occhichiusi.jpg"; // Cambia l'icona per la password nascosta
+                passwordField.type = "password";
+                icon.src = "../static/occhichiusi.jpg";
             }
         }
 
@@ -38,9 +36,9 @@
 
             if (password !== confirmPassword) {
                 alert("Le password non corrispondono!");
-                return false; // Impedisce l'invio del form
+                return false;
             }
-            return true; // Permette l'invio del form
+            return true;
         }
     </script>
 </head>
@@ -72,7 +70,6 @@
         <button type="submit" onclick="showPasswordFields()">Registrati con Password</button>
         <button type="button" id="startRegistration">Inizia Registrazione con Passkey</button>
 
-            <!-- Area per i messaggi di errore -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div id="flash-messages">
@@ -174,7 +171,7 @@
     }
 });
 
-// Define base64url utility functions
+
 const base64url = {
     encode: function(arrayBuffer) {
         let binaryString = '';

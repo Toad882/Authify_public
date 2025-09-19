@@ -4,30 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="../static/styles_login.css"> <!-- Updated path -->
+    <link rel="stylesheet" href="../static/styles_login.css">
 <script>
     function showPasswordFields() {
-        // Mostra i campi per la password
         document.getElementById('password-fields').style.display = 'block';
         document.getElementById('register-password').required = true;
-    
-        // Imposta le icone predefinite (occhichiusi.jpg)
+
         document.getElementById('toggle-password').src = "../static/occhichiusi.jpg";
         document.getElementById('toggle-confirm-password').src = "../static/occhichiusi.jpg";
     }
 
     function togglePasswordVisibility(passwordId, iconId) {
-    const passwordField = document.getElementById(passwordId);
-    const icon = document.getElementById(iconId);
+        const passwordField = document.getElementById(passwordId);
+        const icon = document.getElementById(iconId);
 
-    if (passwordField.type === "password") {
-        passwordField.type = "text"; // Mostra la password
-        icon.src = "../static/occhiaperti.jpg"; // Cambia l'icona per la password visibile
-    } else {
-        passwordField.type = "password"; // Nasconde la password
-        icon.src = "../static/occhichiusi.jpg"; // Cambia l'icona per la password nascosta
+        if (passwordField.type === "password") {
+            passwordField.type = "text"; // Mostra la password
+            icon.src = "../static/occhiaperti.jpg"; // Cambia l'icona per la password visibile
+        } else {
+            passwordField.type = "password"; // Nasconde la password
+            icon.src = "../static/occhichiusi.jpg"; // Cambia l'icona per la password nascosta
+        }
     }
-}
+
+    // FIXED: Safe base64 decoder that handles URL-safe base64
+    function safeAtob(base64String) {
+        try {
+            // Convert URL-safe base64 to standard base64
+            let standardBase64 = base64String.replace(/-/g, '+').replace(/_/g, '/');
+
+            // Add padding if needed
+            const missingPadding = standardBase64.length % 4;
+            if (missingPadding) {
+                standardBase64 += '='.repeat(4 - missingPadding);
+            }
+
+            return atob(standardBase64);
+        } catch (error) {
+            console.error('Base64 decode error:', error, 'Input:', base64String);
+            throw new Error('Invalid base64 string: ' + base64String);
+        }
+    }
 </script>
 </head>
 <body>
@@ -47,7 +64,7 @@
 
         <input type="hidden" name="csrf_token" value = "{{ csrf_token() }}" />
 
-    <button type="submit">Login</button>
+        <button type="submit">Login</button>
 
         <!-- Posizione dei messaggi flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -63,88 +80,116 @@
         <!-- Sezione per la registrazione -->
         <p>Non hai un account? <a href="/register">Registrati ora</a></p>
 
-        <!-- Sezione per l'accesso con Passkey -->
+        <!-- Sezione per l'accesso con Passkey USERNAMELESS -->
         <p>Accedi con Passkey <a href="#" id="loginPasskeyLink" onclick="authenticatePasskey()">Clicca qui</a></p>
 
         <!-- Sezione per la password dimenticata -->
         <p><a href="/forgotPasswd">Hai dimenticato la password?</a></p>
-
-        
     </form>
-
-    
-
 
 <script>
     async function authenticatePasskey() {
-    try {
-        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-
-        const response = await fetch('/start_passkey_authentication', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({})
-        });
-
-        const options = await response.json();
-        if (options.status !== 'success') {
-            alert(options.message);
-            return;
-        }
-
-        const publicKeyOptions = options.authenticationOptions;
-        publicKeyOptions.challenge = Uint8Array.from(atob(publicKeyOptions.challenge), c => c.charCodeAt(0));
-        publicKeyOptions.allowCredentials = publicKeyOptions.allowCredentials.map(cred => {
-            cred.id = Uint8Array.from(atob(cred.id), c => c.charCodeAt(0));
-            return cred;
-        });
-
         try {
-            const credential = await navigator.credentials.get({ publicKey: publicKeyOptions });
-            const verificationResponse = await fetch('/verify_passkey_authentication', {
+            console.log('Starting usernameless passkey authentication...');
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+            const response = await fetch('/start_passkey_authentication', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify({
-                    id: credential.id,
-                    rawId: base64FromArrayBuffer(credential.rawId),
-                    response: {
-                        clientDataJSON: base64FromArrayBuffer(credential.response.clientDataJSON),
-                        authenticatorData: base64FromArrayBuffer(credential.response.authenticatorData),
-                        signature: base64FromArrayBuffer(credential.response.signature),
-                        userHandle: credential.response.userHandle ? base64FromArrayBuffer(credential.response.userHandle) : null
-                    }
-                }),
+                body: JSON.stringify({})  // Empty body for usernameless auth
             });
 
-            const result = await verificationResponse.json();
-            if (result.status === 'success') {
-                alert('Login successful!');
-                const nextUrl = result.next_url || '/dashboard';
-                window.location.href = nextUrl;
+            const options = await response.json();
+            console.log('Authentication options received:', options);
+
+            if (options.status !== 'success') {
+                alert('Errore: ' + options.message);
+                return;
+            }
+
+            const publicKeyOptions = options.authenticationOptions;
+
+            publicKeyOptions.challenge = Uint8Array.from(safeAtob(publicKeyOptions.challenge), c => c.charCodeAt(0));
+
+            if (publicKeyOptions.allowCredentials && publicKeyOptions.allowCredentials.length > 0) {
+                publicKeyOptions.allowCredentials = publicKeyOptions.allowCredentials.map(cred => {
+                    cred.id = Uint8Array.from(safeAtob(cred.id), c => c.charCodeAt(0));
+                    return cred;
+                });
+                console.log('Using username-based authentication with allowCredentials');
             } else {
-                alert(result.message);
+                delete publicKeyOptions.allowCredentials;
+                console.log('Using usernameless authentication - no allowCredentials');
+            }
+
+            console.log('Final publicKeyOptions:', publicKeyOptions);
+
+            try {
+                console.log('Calling navigator.credentials.get...');
+                const credential = await navigator.credentials.get({ publicKey: publicKeyOptions });
+                console.log('Credential received:', credential);
+
+                const verificationResponse = await fetch('/verify_passkey_authentication', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: base64FromArrayBuffer(credential.rawId),
+                        response: {
+                            clientDataJSON: base64FromArrayBuffer(credential.response.clientDataJSON),
+                            authenticatorData: base64FromArrayBuffer(credential.response.authenticatorData),
+                            signature: base64FromArrayBuffer(credential.response.signature),
+                            userHandle: credential.response.userHandle ? base64FromArrayBuffer(credential.response.userHandle) : null
+                        }
+                    }),
+                });
+
+                const result = await verificationResponse.json();
+                console.log('Verification result:', result);
+
+                if (result.status === 'success') {
+                    alert('Login effettuato con successo! ' + (result.message || ''));
+                    const nextUrl = result.next_url || '/dashboard';
+                    window.location.href = nextUrl;
+                } else {
+                    alert('Errore: ' + result.message);
+                }
+            } catch (webauthnError) {
+                console.error('WebAuthn error:', webauthnError);
+
+                if (webauthnError.name === 'NotAllowedError') {
+                    alert('Autenticazione annullata o passkey non riconosciuto.');
+                } else if (webauthnError.name === 'SecurityError') {
+                    alert('Errore di sicurezza. Assicurati di essere su HTTPS.');
+                } else if (webauthnError.name === 'NotSupportedError') {
+                    alert('Il browser non supporta i passkey.');
+                } else if (webauthnError.name === 'InvalidStateError') {
+                    alert('Stato non valido. Riprova.');
+                } else {
+                    alert('Errore WebAuthn: ' + webauthnError.message);
+                }
             }
         } catch (error) {
-            alert('Error during passkey authentication.');
+            console.error('General error:', error);
+            alert('Errore generale durante l\'autenticazione con passkey: ' + error.message);
         }
-    } catch (error) {
-        alert('Error during passkey authentication.');
     }
-}
 
-function base64FromArrayBuffer(arrayBuffer) {
-    let binary = '';
-    const bytes = new Uint8Array(arrayBuffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+    function base64FromArrayBuffer(arrayBuffer) {
+        let binary = '';
+        const bytes = new Uint8Array(arrayBuffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
-    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
 </script>
+</body>
+</html>

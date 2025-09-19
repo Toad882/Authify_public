@@ -1,6 +1,6 @@
 from flask_pymongo import PyMongo
 import logging
-from authlib.oauth2.rfc6749 import ClientMixin, TokenMixin
+from authlib.oauth2.rfc6749 import ClientMixin, TokenMixin, AuthorizationCodeMixin
 from werkzeug.security import check_password_hash
 
 mongo = PyMongo()
@@ -27,10 +27,11 @@ def init_db(app):
         mongo = None
 
 class Client(ClientMixin):
-    def __init__(self, client_id, client_secret, redirect_uri):
+    def __init__(self, client_id, client_secret, redirect_uri, client_name):
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
+        self.client_name = client_name
 
     def get_client_id(self):
         return self.client_id
@@ -48,12 +49,10 @@ class Client(ClientMixin):
         return ['openid', 'profile', 'email']
 
     def check_grant_type(self, grant_type):
-        # Check if the client supports the specified grant type
         return grant_type == 'authorization_code'
 
     def check_endpoint_auth_method(self, method, endpoint):
         if endpoint == 'token':
-            # Check if the client supports the specified authentication method for the token endpoint
             return method in ['client_secret_basic', 'client_secret_post']
         return False
 
@@ -62,8 +61,7 @@ class Client(ClientMixin):
         return ['client_secret_basic', 'client_secret_post']
 
 class Token(TokenMixin):
-    def __init__(self, access_token=None, token_type='Bearer', expires_in=3600, refresh_token=None,
-                 scope='', user_id=None, client_id=None):
+    def __init__(self, access_token=None, token_type='Bearer', expires_in=3600, refresh_token=None, scope='', user_id=None, client_id=None):
         self.access_token = access_token
         self.token_type = token_type
         self.expires_in = expires_in
@@ -78,7 +76,7 @@ class Token(TokenMixin):
     def get_scope(self):
         return self.scope
 
-class AuthorizationCode:
+class AuthorizationCode(AuthorizationCodeMixin):
     def __init__(self, code, client_id, redirect_uri, scope, user, state=None):
         self.code = code
         self.client_id = client_id
@@ -87,6 +85,38 @@ class AuthorizationCode:
         self.user = user
         self.state = state
 
+    # Required by AuthorizationCodeMixin
+    def get_redirect_uri(self):
+        return self.redirect_uri
+
+    def get_scope(self):
+        return self.scope
+
+    def get_auth_time(self):
+        return None
+
+    def get_nonce(self):
+        return None
+
+    # Additional helper methods
+    def get_client_id(self):
+        return self.client_id
+
+    def get_code(self):
+        return self.code
+
+    def get_user_id(self):
+        return self.user
+
+    def is_expired(self, expires_at=None):
+        if expires_at:
+            from datetime import datetime
+            return datetime.utcnow() > expires_at
+        return False
+
 class User:
     def __init__(self, user_id):
         self.id = user_id
+
+    def get_user_id(self):
+        return self.id
