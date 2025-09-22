@@ -1,16 +1,22 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for, flash, render_template
+
 from auth import query_client
+
 from werkzeug.security import check_password_hash
+
 from webauthn.helpers.structs import AuthenticatorAttestationResponse, AuthenticatorAssertionResponse
+
 from webauthn import (
-    generate_registration_options, verify_registration_response,
-    generate_authentication_options, verify_authentication_response,
+generate_registration_options, verify_registration_response,
+generate_authentication_options, verify_authentication_response,
 )
+
 from webauthn.helpers.structs import (
-    RegistrationCredential, AuthenticationCredential,
-    AuthenticatorSelectionCriteria, UserVerificationRequirement,
-    ResidentKeyRequirement, AttestationConveyancePreference
+RegistrationCredential, AuthenticationCredential,
+AuthenticatorSelectionCriteria, UserVerificationRequirement,
+ResidentKeyRequirement, AttestationConveyancePreference
 )
+
 import webauthn
 import base64
 from models import mongo, check_db_connection
@@ -25,12 +31,10 @@ import pyotp
 from urllib.parse import urlparse, urljoin
 from datetime import datetime, timedelta
 
-
 def is_safe_url_target(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
-
 
 def regenerate_session():
     old_data = dict(session)
@@ -38,23 +42,19 @@ def regenerate_session():
     session.update(old_data)
     session.permanent = True
 
-
 def safe_error_response(error_type, debug_info=None):
     from app import app
     if app.debug and debug_info:
         return jsonify({'error': error_type, 'debug': debug_info})
     return jsonify({'error': 'An error occurred. Please try again.'})
 
-
 def safe_log_client_info(client_id, operation):
     masked_id = f"{client_id[:8]}***" if len(client_id) > 8 else "***"
     logging.info(f"{operation} for client: {masked_id}")
 
-
 def safe_base64_decode(data_string):
     if not data_string:
         raise ValueError("Empty data string")
-
     try:
         return base64.urlsafe_b64decode(data_string)
     except Exception:
@@ -72,7 +72,6 @@ def safe_base64_decode(data_string):
                     data_string += '=' * (4 - missing_padding)
                 return base64.b64decode(data_string)
 
-
 def create_auth_bp():
     auth_bp = Blueprint('auth', __name__)
     from app import csrf, limiter
@@ -85,7 +84,6 @@ def create_auth_bp():
             client_id, _ = decoded_credentials.split(':', 1)
         else:
             client_id = request.form.get('client_id') or request.json.get('client_id')
-
         safe_log_client_info(client_id if client_id else "unknown", "Client ID extraction")
         return client_id
 
@@ -151,15 +149,24 @@ def create_auth_bp():
             logging.info(f"User confirmed authorization. Generating code and redirecting to {redirect_uri}.")
             auth_code = str(uuid.uuid4())
 
-            params = {
-                'client_id': client_id,
-                'redirect_uri': redirect_uri,
-                'scope': scope,
-                'response_type': response_type,
-                'next_url': session.get('next')
-            }
+            # Create OAuth2Request without deprecated 'body' parameter
+            oauth2_request = OAuth2Request(method=request.method, uri=request.url)
 
-            oauth2_request = OAuth2Request(method=request.method, uri=request.url, body=params)
+            # Manually create a simple payload object for the request
+            class AuthPayload:
+                def __init__(self, **kwargs):
+                    for key, value in kwargs.items():
+                        setattr(self, key, value)
+
+            oauth2_request.payload = AuthPayload(
+                client_id=client_id,
+                redirect_uri=redirect_uri,
+                scope=scope,
+                response_type=response_type,
+                state=state,
+                next_url=session.get('next')
+            )
+
             oauth2_request.client = client
             oauth2_request.user = user
 
@@ -168,7 +175,6 @@ def create_auth_bp():
 
             redirection_url = f"{redirect_uri}?code={auth_code}&state={state}"
             logging.info(f"Redirection URL: {redirection_url}")
-
             session.pop('next', None)
             return redirect(redirection_url)
 
@@ -181,11 +187,12 @@ def create_auth_bp():
         return render_template('authorize.html', client=client, scope=scope, state=state,
                                redirect_uri=redirect_uri, csrf_token=csrf_token, client_name=client_name)
 
+
+
     @auth_bp.route('/token', methods=['POST'])
     @csrf.exempt
     def issue_token():
         logging.info("=== TOKEN ENDPOINT CALLED ===")
-
         try:
             logging.info(f"Request method: {request.method}")
             logging.info(f"Request form data: {dict(request.form)}")
@@ -214,9 +221,9 @@ def create_auth_bp():
                 return jsonify({'error': 'invalid_request'}), 400
 
             logging.info(f"Looking up client: {client_id}")
-
             from auth import query_client
             client = query_client(client_id)
+
             if not client:
                 logging.error(f"Client not found: {client_id}")
                 return jsonify({'error': 'invalid_client'}), 400
@@ -275,7 +282,6 @@ def create_auth_bp():
                 from config import Config
 
                 access_token = secrets.token_urlsafe(32)
-
                 payload = {
                     'sub': code_data['user'],
                     'aud': client_id,
@@ -304,7 +310,6 @@ def create_auth_bp():
                 )
 
                 mongo.db.authorization_codes.delete_one({'code': authorization_code})
-
                 logging.info("Token created and saved successfully")
 
                 response = {
@@ -339,6 +344,7 @@ def create_auth_bp():
             return redirect(url_for('user.dashboard'))
 
         form = request.form
+
         if request.method == 'POST':
             username = form.get('username')
             password = form.get('password')
@@ -353,8 +359,8 @@ def create_auth_bp():
                         flash('Account temporarily locked due to too many failed attempts. Try again in 5 minutes.',
                               'error')
                         return render_template('login.html')
-                else:
-                    session['failed_login_attempts'] = 0
+                    else:
+                        session['failed_login_attempts'] = 0
 
             if not username or not password:
                 flash('All fields are required.', 'error')
@@ -416,8 +422,8 @@ def create_auth_bp():
             return redirect(url_for('auth.login'))
 
         totp_secret = user.get('totp_secret')
-        form = request.form
 
+        form = request.form
         if request.method == 'POST':
             totp_code = form.get('totp_code')
 
@@ -517,6 +523,7 @@ def create_auth_bp():
             client_data_json = safe_base64_decode(data['response']['clientDataJSON'])
             credential_id = data['id']
             raw_id = data['rawId']
+
             raw_id_bytes = safe_base64_decode(raw_id)
 
             registration_credential = RegistrationCredential(
@@ -547,7 +554,6 @@ def create_auth_bp():
             email = session.pop('registration_email')
 
             check_db_connection()
-
             mongo.db.users.update_one(
                 {'user_id': user_id},
                 {'$set': {
@@ -575,13 +581,11 @@ def create_auth_bp():
             logging.error(f"Error during passkey registration: {str(e)}")
             import traceback
             logging.error(f"Full traceback: {traceback.format_exc()}")
-
             error_message = str(e)
             if "Incorrect padding" in error_message:
                 error_message = "Base64 decoding error - check WebAuthn data format"
             elif "Invalid" in error_message:
                 error_message = "WebAuthn validation failed"
-
             return jsonify({'status': 'error', 'message': f'Registration failed: {error_message}'}), 400
 
     @auth_bp.route('/start_passkey_authentication', methods=['POST'])
@@ -640,7 +644,6 @@ def create_auth_bp():
             )
 
             check_db_connection()
-
             user = None
 
             user = mongo.db.users.find_one({
@@ -688,6 +691,7 @@ def create_auth_bp():
                 redirect_url = url_for('user.dashboard')
 
             logging.info(f"Usernameless passkey auth successful for user: {user['username']}, redirecting to: {redirect_url}")
+
             return jsonify({
                 'status': 'success',
                 'message': f'Welcome back, {user["username"]}!',  # Show username after authentication
@@ -698,7 +702,6 @@ def create_auth_bp():
             logging.error(f"Error during passkey authentication: {str(e)}")
             import traceback
             logging.error(f"Full authentication traceback: {traceback.format_exc()}")
-
             error_message = str(e)
             if "Incorrect padding" in error_message:
                 error_message = "Base64 decoding error in WebAuthn data"
@@ -706,7 +709,6 @@ def create_auth_bp():
                 error_message = "WebAuthn authentication validation failed"
             elif "Challenge" in error_message:
                 error_message = "Authentication challenge expired or invalid"
-
             return jsonify({'status': 'error', 'message': f'Authentication failed: {error_message}'}), 500
 
     return auth_bp

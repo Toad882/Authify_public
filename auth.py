@@ -8,7 +8,6 @@ from flask import session
 from datetime import datetime, timedelta
 import re
 
-
 def validate_input_string(value, pattern=None, max_length=255):
     if not isinstance(value, str):
         return False
@@ -18,11 +17,9 @@ def validate_input_string(value, pattern=None, max_length=255):
         return False
     return True
 
-
 def safe_error_response(error_type, debug_info=None):
     import os
     debug_mode = os.environ.get('FLASK_ENV') == 'development'
-
     if debug_mode and debug_info:
         return {'error': error_type, 'debug': debug_info}
 
@@ -41,7 +38,6 @@ def safe_error_response(error_type, debug_info=None):
 
     return {'error': error_messages.get(error_type, 'An error occurred. Please try again.')}
 
-
 class SecurityLogger:
     def __init__(self):
         self.logger = logging.getLogger('security')
@@ -55,16 +51,12 @@ class SecurityLogger:
     def log_auth_event(self, event_type, user_id=None, client_id=None, ip_address=None, details=None):
         masked_user = f"{user_id[:8]}***" if user_id and len(user_id) > 8 else "unknown"
         masked_client = f"{client_id[:8]}***" if client_id and len(client_id) > 8 else "unknown"
-
         log_message = f"{event_type} - User: {masked_user}, Client: {masked_client}, IP: {ip_address or 'unknown'}"
         if details:
             log_message += f", Details: {details}"
-
         self.logger.info(log_message)
 
-
 security_logger = SecurityLogger()
-
 
 def query_client(client_id):
     try:
@@ -83,7 +75,6 @@ def query_client(client_id):
     except Exception as e:
         logging.error(f"Error querying client: {str(e)}")
         return None
-
 
 def save_token(token, request, *args, **kwargs):
     try:
@@ -125,10 +116,8 @@ def save_token(token, request, *args, **kwargs):
         logging.error(f"Error saving token: {str(e)}")
         raise InvalidGrantError("Failed to save token")
 
-
 def generate_csrf_token():
     return secrets.token_urlsafe(32)
-
 
 class CustomAuthorizationCodeGrant(grants.AuthorizationCodeGrant):
     TOKEN_ENDPOINT_AUTH_METHODS = ['client_secret_basic', 'client_secret_post']
@@ -150,13 +139,55 @@ class CustomAuthorizationCodeGrant(grants.AuthorizationCodeGrant):
             if not user_id:
                 raise InvalidGrantError("User not authenticated")
 
+            # FIXED: Get redirect_uri from the new payload system instead of deprecated direct access
+            redirect_uri = None
+            try:
+                # First try the new payload system
+                if hasattr(request, 'payload') and request.payload is not None:
+                    redirect_uri = getattr(request.payload, 'redirect_uri', None)
+
+                # Fallback to deprecated method for backward compatibility
+                if redirect_uri is None:
+                    redirect_uri = getattr(request, 'redirect_uri', None)
+
+                # If still None, try to extract from other sources
+                if redirect_uri is None and hasattr(request, 'args'):
+                    redirect_uri = request.args.get('redirect_uri')
+
+            except AttributeError as e:
+                logging.error(f"Error accessing redirect_uri: {str(e)}")
+                raise InvalidGrantError("Could not access redirect_uri from request")
+
+            if not redirect_uri:
+                raise InvalidGrantError("redirect_uri is required")
+
+            # Get scope from payload or fallback methods
+            scope = None
+            try:
+                if hasattr(request, 'payload') and request.payload is not None:
+                    scope = getattr(request.payload, 'scope', None)
+                if scope is None:
+                    scope = getattr(request, 'scope', '')
+            except AttributeError:
+                scope = ''
+
+            # Get state from payload or fallback methods
+            state = None
+            try:
+                if hasattr(request, 'payload') and request.payload is not None:
+                    state = getattr(request.payload, 'state', None)
+                if state is None:
+                    state = getattr(request, 'state', None)
+            except AttributeError:
+                state = None
+
             code_data = AuthorizationCode(
                 code=code,
                 client_id=request.client.client_id,
-                redirect_uri=request.redirect_uri,
-                scope=request.scope,
+                redirect_uri=redirect_uri,
+                scope=scope,
                 user=user_id,
-                state=getattr(request, 'state', None)
+                state=state
             )
 
             code_dict = code_data.__dict__.copy()
@@ -201,8 +232,8 @@ class CustomAuthorizationCodeGrant(grants.AuthorizationCodeGrant):
                     user=code_data['user'],
                     state=code_data.get('state')
                 )
-            return None
 
+            return None
         except Exception as e:
             logging.error(f"Error querying authorization code: {str(e)}")
             return None
@@ -216,7 +247,6 @@ class CustomAuthorizationCodeGrant(grants.AuthorizationCodeGrant):
     def authenticate_user(self, authorization_code):
         try:
             user_id = authorization_code.user
-
             if not validate_input_string(user_id):
                 return None
 
@@ -224,11 +254,9 @@ class CustomAuthorizationCodeGrant(grants.AuthorizationCodeGrant):
             if user_data:
                 return User(user_id=user_data['user_id'])
             return None
-
         except Exception as e:
             logging.error(f"Error authenticating user: {str(e)}")
             return None
-
 
 class CustomAuthorizationServer(AuthorizationServer):
     def create_oauth2_request(self, request):
@@ -244,15 +272,12 @@ class CustomAuthorizationServer(AuthorizationServer):
             if os.environ.get('FLASK_ENV') != 'development':
                 if isinstance(response_data, dict) and 'debug' in response_data:
                     response_data = {k: v for k, v in response_data.items() if k != 'debug'}
-
             return super().handle_response(response_data, headers)
         except Exception as e:
             logging.error(f"Error handling response: {str(e)}")
             return safe_error_response('server_error'), 500
 
-
 require_oauth = ResourceProtector()
-
 
 def create_revoke_token_validator():
     from authlib.oauth2.rfc7009 import RevocationEndpoint
@@ -276,8 +301,8 @@ def create_revoke_token_validator():
                         expires_at=token_data['expires_at'],
                         scope=token_data.get('scope', '')
                     )
-                return None
 
+                return None
             except Exception as e:
                 logging.error(f"Error querying token for revocation: {str(e)}")
                 return None
@@ -296,12 +321,10 @@ def create_revoke_token_validator():
                     user_id=token.user_id,
                     client_id=token.client_id
                 )
-
             except Exception as e:
                 logging.error(f"Error revoking token: {str(e)}")
 
     return TokenRevocationEndpoint()
-
 
 def validate_token_request(token_string):
     try:
@@ -309,6 +332,7 @@ def validate_token_request(token_string):
             return None
 
         token_data = mongo.db.tokens.find_one({'access_token': token_string})
+
         if token_data:
             if datetime.utcnow() > token_data['expires_at']:
                 mongo.db.tokens.delete_one({'_id': token_data['_id']})
@@ -322,8 +346,8 @@ def validate_token_request(token_string):
                 expires_at=token_data['expires_at'],
                 scope=token_data.get('scope', '')
             )
-        return None
 
+        return None
     except Exception as e:
         logging.error(f"Error validating token: {str(e)}")
         return None
